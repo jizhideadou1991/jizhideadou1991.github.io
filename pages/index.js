@@ -3,6 +3,8 @@ let vm = new Vue({
 	data: {
 		loadingMask: true,
 
+		stateCol: {},
+
 		hasData: false,
 		able2Import: true,		// 每次打开浏览器只允许导入一次excel，再次导入需要刷新页面
 		able2StoreData: true,	// 每次打开浏览器只允许覆写一次localStorage，再次覆写需要刷新页面
@@ -44,8 +46,10 @@ let vm = new Vue({
 
 		init: function () {
 			this.loadingMask = false;
+			this.stateCol = DATA_stateCol;
 
 			this.checkLocalStorage();
+			checkLocalStorageTutorData();
 
 			const inputEle = document.getElementById("excel-file");
 			// 为input添加onchange事件
@@ -103,15 +107,16 @@ let vm = new Vue({
 				if (!dataArr[i].新增时间) {break;}
 				outputArr[i] = {
 					id: 20200000+parseInt(dataArr[i].编号)+'',
-					creatTime: (dataArr[i].新增时间).split('/')[0] + '-' + this.addZero((dataArr[i].新增时间).split('/')[1]) + '-' + this.addZero((dataArr[i].新增时间).split('/')[2]),
+					createTime: (dataArr[i].新增时间).split('/')[0] + '-' + this.addZero((dataArr[i].新增时间).split('/')[1]) + '-' + this.addZero((dataArr[i].新增时间).split('/')[2]),
 					stuName: dataArr[i].学生姓名,
 					coName: dataArr[i].企业名称,
 					tutorName: dataArr[i].导师姓名,
 					tutorClass: dataArr[i].导师职位,
 					progress: parseInt((dataArr[i].实习进度).split('/')[0]),
 					maxProgress: parseInt((dataArr[i].实习进度).split('/')[1]),
+					meetTime: dataArr[i].沟通时间?dataArr[i].沟通时间:'',
 					recLetterState: calcRecLetterState(dataArr[i].推荐信),	// 0未完成课程 1草拟中 2待签发 3已签发
-					recTime: dataArr[i].签发时间?(dataArr[i].签发时间).split('/')[0] + '-' + this.addZero((dataArr[i].签发时间).split('/')[1]) + '-' + this.addZero((dataArr[i].签发时间).split('/')[2]):null,
+					recTime: dataArr[i].签发时间?(dataArr[i].签发时间).split('/')[0] + '-' + this.addZero((dataArr[i].签发时间).split('/')[1]) + '-' + this.addZero((dataArr[i].签发时间).split('/')[2]):'',
 					income: parseInt(dataArr[i].合作价格),
 					paymentState: calcPaymentState(dataArr[i].付款情况), // 0未完成课程 1待支付 2已付清
 					cost: parseInt(dataArr[i].支出),
@@ -191,6 +196,36 @@ let vm = new Vue({
 		gotoEdit: function () {
 			let url = "edit_data.html";
 			window.open(url);
+		},
+
+		exportFile: function () {
+			const sheet1 = XLSX.utils.aoa_to_sheet(this.localStorage2Arr());
+			let fileName = 'True_Talent_Data_';
+			const timeObj = new Date();
+			fileName += timeObj.getFullYear() + addZero(timeObj.getMonth()+1) + addZero(timeObj.getDate()) + '_';
+			fileName += addZero(timeObj.getHours()) + addZero(timeObj.getMinutes()) + addZero(timeObj.getSeconds()) + '.xlsx';
+			openDownloadDialog(sheet2blob([sheet1]), fileName);
+		},
+
+		localStorage2Arr: function () {
+			const data = JSON.parse(localStorage.getItem('dataArr'));
+			const arr = [];
+			arr[0] = [
+				'编号', '新增时间', '学生姓名', '企业名称', '导师姓名', '导师职位', '实习进度',
+				'沟通时间', '推荐信', '签发时间', '合作价格', '付款情况', '支出', '备注'
+			];
+			for (let i=0;i<data.length;i++) {
+				arr[i+1] = [
+					data[i].id, data[i].createTime, data[i].stuName,
+					data[i].coName, data[i].tutorName, data[i].tutorClass,
+					data[i].progress+'/'+data[i].maxProgress, data[i].meetTime,
+					this.stateCol.recLetterState[data[i].recLetterState],
+					data[i].recTime, data[i].income, this.stateCol.paymentState[data[i].paymentState],
+					data[i].cost, data[i].remark
+				];
+			}
+			//console.log(arr);
+			return arr;
 		},
 
 		checkLocalStorage: checkLocalStorage,
