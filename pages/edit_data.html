@@ -28,7 +28,7 @@
 
   <div class="table-body" id="table-body">
     <div class="table-header">
-      <div class="single-box" style="border-left: 1px solid black;width: 90px">编号</div>
+      <div class="single-box" style="width: 90px">编号</div>
       <div class="single-box" style="width: 100px">新增时间</div>
       <div class="single-box" style="width: 80px">学生姓名</div>
       <div class="single-box" style="width: 110px">企业名称</div>
@@ -44,7 +44,7 @@
       <div class="single-box" style="width: 45px">备注</div>
     </div>
     <div class="table-item" v-for="(tableItem,tableIdx) in dataArr" :style="highLightIdx===tableIdx?'box-shadow: -10px 0 10px red':''">
-      <div class="single-box" style="border-left: 1px solid black;width: 90px" :style="modifiedBgStr(tableIdx,'id')">{{tableItem.id}}</div>
+      <div class="single-box" style="width: 90px" :style="modifiedBgStr(tableIdx,'id')">{{tableItem.id}}</div>
       <div class="single-box" style="width: 100px" :style="modifiedBgStr(tableIdx,'createTime')">{{tableItem.createTime}}</div>
       <div class="single-box" style="width: 80px" :style="modifiedBgStr(tableIdx,'stuName')">{{tableItem.stuName}}</div>
       <div class="single-box" style="width: 110px" :style="modifiedBgStr(tableIdx,'coName')">{{tableItem.coName}}</div>
@@ -58,14 +58,14 @@
       <div class="single-box" style="width: 75px" :style="modifiedBgStr(tableIdx,'paymentState')">{{stateCol.paymentState[tableItem.paymentState]}}</div>
       <div class="single-box" style="width: 60px" :style="modifiedBgStr(tableIdx,'cost')">{{tableItem.cost}}</div>
       <div class="single-box" style="width: 45px" :style="modifiedBgStr(tableIdx,'remark')">
-				<div @mouseover.stop="showRemark(tableIdx)">{{tableItem.remark?'查看':''}}</div>
+				<div @mouseover.stop="showRemark(tableIdx)">{{tableItem.remark?(tableItem.remark==='delete'?'删除':'查看'):''}}</div>
 				<div class="remark-box" v-if="showRemarkIdx===tableIdx">{{tableItem.remark}}</div>
 			</div>
       <div class="btn" style="margin-left: 10px;padding: 0 3px" @click="openModTableItemWin(tableIdx)" @mouseover.stop="highLightItem(tableIdx)">编辑</div>
     </div>
     <div class="table-footer">
       <div class="btn" style="width: 80px" @click="openModTableItemWin(-1)">新增</div>
-      <div class="btn" style="width: 80px">提交</div>
+      <div class="btn" style="width: 80px" @click="openApproveDataWin()">提交</div>
     </div>
   </div>
 
@@ -144,10 +144,25 @@
         </div>
         <div class="sub-box">
           <div class="left">备注</div>
-          <input class="right input-text" v-model="modItemObj.remark" />
+          <input class="right input-text" v-model="modItemObj.remark"/>
         </div>
       </div>
       <div class="btn" style="font-size: 25px;padding: 5px" @click="commitMod()">确认</div>
+    </div>
+  </transition>
+
+  <transition name="showMask">
+    <div class="popup-bg" v-if="popupFlag.approveWin" @click="closeApproveDataWin()">
+      <div class="dialog-win" @click.stop>
+        <div class="upper-box">
+          <div class="text">即将提交本页修改后的企业数据至浏览器存储</div>
+          <div class="text">请提前导出excel做好备份</div>
+        </div>
+        <div class="lower-box">
+          <div class="btn cancel-btn" @click="closeApproveDataWin()">取消</div>
+          <div class="btn confirm-btn" @click="approveData()">确定</div>
+        </div>
+      </div>
     </div>
   </transition>
 
