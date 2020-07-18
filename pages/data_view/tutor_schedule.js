@@ -5,6 +5,7 @@ let vm = new Vue({
 
 		tutorDetailIdx: -1,
 		tutorDetailKeyMap: [],
+		periodDetailIdx: [],		// 查看某一时间段的学生情况
 
 		showScheduleIdx: [-1, -1],
 		showPrepareIdx: [-1, -1],
@@ -17,6 +18,7 @@ let vm = new Vue({
 
 		popupFlag: {
 			tutorDetailWin: false,
+			periodDetailWin: false,
 		},
 
 		dataArr: null,
@@ -153,10 +155,10 @@ let vm = new Vue({
 
 				for (let j=startIdx;j<=endIdx;j++) {
 					if (dataArr[i].meetTime.length>8) {
-						schedulerArr[tutorIdx][j].push(dataArr[i].stuName);
+						schedulerArr[tutorIdx][j].push(dataArr[i].stuName +' '+ dataArr[i].id);
 					}
 					else {
-						prepareArr[tutorIdx][j].push(dataArr[i].stuName);
+						prepareArr[tutorIdx][j].push(dataArr[i].stuName  +' '+ dataArr[i].id);
 					}
 				}
 			}
@@ -168,23 +170,27 @@ let vm = new Vue({
 				let curObj = {
 					dayNum: 1,
 					totalLen: N,
-					nameArr: schedulerArr[i][0]
+					nameArr: schedulerArr[i][0],
+					startTimeStamp: this.scheduleStartTime
 				};
 				for (let j=1;j<schedulerArr[i].length;j++) {
 					if (this.compareArr(curObj.nameArr, schedulerArr[i][j])) {
 						curObj.dayNum++
 					}
 					else {
+						curObj.endTimeStamp = this.timestampShift(this.scheduleStartTime,j-1);
 						curObj.styleStr = 'width:'+curObj.dayNum/curObj.totalLen*100+'%;';
 						curObj.styleStr += 'background:' + this.perc2color(1-curObj.nameArr.length/4);
 						outputArr[i].push(curObj);
 						curObj = {
 							dayNum: 1,
 							totalLen: N,
-							nameArr: schedulerArr[i][j]
+							nameArr: schedulerArr[i][j],
+							startTimeStamp: this.timestampShift(this.scheduleStartTime,j)
 						}
 					}
 				}
+				curObj.endTimeStamp = this.scheduleEndTime
 				curObj.styleStr = 'width:'+curObj.dayNum/curObj.totalLen*100+'%;';
 				curObj.styleStr += 'background:' + this.perc2color(1-curObj.nameArr.length/4);
 				outputArr[i].push(curObj);
@@ -198,23 +204,27 @@ let vm = new Vue({
 				let curObj = {
 					dayNum: 1,
 					totalLen: N,
-					nameArr: prepareArr[i][0]
+					nameArr: prepareArr[i][0],
+					startTimeStamp: this.scheduleStartTime
 				};
 				for (let j=1;j<prepareArr[i].length;j++) {
 					if (this.compareArr(curObj.nameArr, prepareArr[i][j])) {
 						curObj.dayNum++
 					}
 					else {
+						curObj.endTimeStamp = this.timestampShift(this.scheduleStartTime,j-1);
 						curObj.styleStr = 'width:'+curObj.dayNum/curObj.totalLen*100+'%;';
 						curObj.styleStr += 'background:' + this.perc2color(1-curObj.nameArr.length/4);
 						outputArr1[i].push(curObj);
 						curObj = {
 							dayNum: 1,
 							totalLen: N,
-							nameArr: prepareArr[i][j]
+							nameArr: prepareArr[i][j],
+							startTimeStamp: this.timestampShift(this.scheduleStartTime,j)
 						}
 					}
 				}
+				curObj.endTimeStamp = this.scheduleEndTime
 				curObj.styleStr = 'width:'+curObj.dayNum/curObj.totalLen*100+'%;';
 				curObj.styleStr += 'background:' + this.perc2color(1-curObj.nameArr.length/4);
 				outputArr1[i].push(curObj);
@@ -224,6 +234,13 @@ let vm = new Vue({
 
 		openTutorDetail: function (idx) {this.popupFlag.tutorDetailWin = true;this.tutorDetailIdx = idx},
 		closeTutorDetail: function () {this.popupFlag.tutorDetailWin = false;},
+
+		openPeriodDetail: function (idxArr) {
+			// idxArr 中最后一位为0时表示正在上课的人 为1时表示等待开课的人
+			this.periodDetailIdx = idxArr;
+			this.popupFlag.periodDetailWin = true;
+		},
+		closePeriodDetail: function () {this.popupFlag.periodDetailWin = false;},
 
 		dateObj2timestamp: function (dateObj) {
 			const Y = dateObj.getFullYear();
@@ -290,6 +307,14 @@ let vm = new Vue({
 		// 获取鼠标位置
 		getMousePos: function () {
 			this.mousePos = [window.event.clientX, window.event.clientY];
+		},
+
+		gotoEditOrder: function (id) {
+			let url = "../edit_data.html?editOrderId="+id;window.open(url);
+		},
+
+		gotoEditTutor: function (idx) {
+			let url = "../edit_tutor_data.html?editTutorIdx="+idx;window.open(url);
 		}
 
 	}
